@@ -37,18 +37,18 @@ const reducer: React.Reducer<{}, Actions> = (state, action) => {
     }
 };
 
-const LOCAL_STORAGE_KEY = 'zeus.auth.storage';
+export const ZEUS_AUTH_LOCAL_STORAGE_KEY = 'zeus.auth.storage';
 
 export const AuthProvider = ({ children }: any) => {
     let localState = null;
-    if (typeof localStorage !== 'undefined' && localStorage.getItem(LOCAL_STORAGE_KEY)) {
-        localState = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '');
+    if (typeof localStorage !== 'undefined' && localStorage.getItem(ZEUS_AUTH_LOCAL_STORAGE_KEY)) {
+        localState = JSON.parse(localStorage.getItem(ZEUS_AUTH_LOCAL_STORAGE_KEY) || '');
     }
     const [state, dispatch] = useReducer(reducer, localState || initialState);
 
     if (typeof localStorage !== 'undefined') {
         useEffect(() => {
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+            localStorage.setItem(ZEUS_AUTH_LOCAL_STORAGE_KEY, JSON.stringify(state));
         }, [state]);
     }
     return (

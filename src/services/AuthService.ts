@@ -47,21 +47,25 @@ class ZeusAuthService {
         this.publicKey = publicKey;
         this.baseUrl = local ? "http://localhost:3003" : "https://auth.zeusdev.io";
         this.onTokenExpired = onTokenExpired;
+
     }
 
     static init(publicKey: string, onTokenExpired: any, local = false): ZeusAuthService {
+        console.log("[ZeusAuthService] init");
+
         if (!ZeusAuthService.instance) {
             ZeusAuthService.instance = new ZeusAuthService(publicKey, onTokenExpired, local);
         }
 
+
         return ZeusAuthService.instance;
     }
 
-    public signup(user: ZeusAuthTypes.IRegisterEmailPassword): Promise<ZeusAuthTypes.IAPIResponse> {
+    static signup(user: ZeusAuthTypes.ISignupEmailPassword): Promise<ZeusAuthTypes.IAPIResponse> {
         return new Promise((resolve, reject) => {
-            this.fetchUnauthed(
-                this.publicKey,
-                this.baseUrl + SIGNUP_URL,
+            ZeusAuthService.instance.fetchUnauthed(
+                ZeusAuthService.instance.publicKey,
+                ZeusAuthService.instance.baseUrl + SIGNUP_URL,
                 { user },
                 'POST'
             )
@@ -71,12 +75,12 @@ class ZeusAuthService {
 
     }
 
-    public loginWithEmailPassword(session: ZeusAuthTypes.ILoginEmailPassword): Promise<ZeusAuthTypes.IAPIResponse> {
+    static loginWithEmailPassword(session: ZeusAuthTypes.ILoginEmailPassword): Promise<ZeusAuthTypes.IAPIResponse> {
 
         return new Promise((resolve, reject) => {
-            this.fetchUnauthed(
-                this.publicKey,
-                this.baseUrl + LOGIN_EMAIL_PASSWORD_URL,
+            ZeusAuthService.instance.fetchUnauthed(
+                ZeusAuthService.instance.publicKey,
+                ZeusAuthService.instance.baseUrl + LOGIN_EMAIL_PASSWORD_URL,
                 { session },
                 'POST'
             )
@@ -86,11 +90,11 @@ class ZeusAuthService {
 
     }
 
-    public me(): Promise<ZeusAuthTypes.IUser> {
+    static me(): Promise<ZeusAuthTypes.IUser> {
         return new Promise((resolve, reject) => {
-            this.fetchAuthed(
-                this.publicKey,
-                this.baseUrl + ME_URL,
+            ZeusAuthService.instance.fetchAuthed(
+                ZeusAuthService.instance.publicKey,
+                ZeusAuthService.instance.baseUrl + ME_URL,
                 {},
                 'GET'
             )
@@ -101,7 +105,7 @@ class ZeusAuthService {
 
     public saveToken(token: string) {
         const cookies = new Cookies();
-        cookies.set('token', token, { path: '/' });
+        cookies.set('token', token, { path: '/', secure: true, domain: 'auth.zeusdev.io' });
         return Promise.resolve();
     }
 
@@ -160,7 +164,7 @@ class ZeusAuthService {
             method: type
         } as any;
 
-        let queryParams = (type === "GET" && data && this.optionsToRequestParams(decamelize(data))) || {};
+        let queryParams = (type === "GET" && data && this.optionsToRequestParams(decamelize(data))) || "";
 
         if (type !== "GET" && data) {
             fetchOpts.body = JSON.stringify(decamelize(data));
@@ -206,7 +210,7 @@ class ZeusAuthService {
             method: type
         } as any;
 
-        let queryParams = (type === "GET" && data && this.optionsToRequestParams(decamelize(data))) || {};
+        let queryParams = (type === "GET" && data && this.optionsToRequestParams(decamelize(data))) || "";
 
         if (type !== "GET" && data) {
             fetchOpts.body = JSON.stringify(decamelize(data));
@@ -217,9 +221,6 @@ class ZeusAuthService {
                 if (response.status === 401) {
                     const cookies = new Cookies();
                     cookies.remove('token');
-                    // Router.push("/auth/login");
-                    // } else if (type === "GET" && response.status === 404) {
-                    //     Router.push("/404");
                     return this.onTokenExpired();
                 } else {
                     return response.json();

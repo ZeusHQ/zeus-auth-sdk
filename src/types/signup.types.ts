@@ -1,4 +1,4 @@
-export interface IRegisterEmailPassword {
+export interface ISignupEmailPassword {
     firstName: string;
     lastName: string;
     email: string;
