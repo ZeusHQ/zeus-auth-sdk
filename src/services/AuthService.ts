@@ -3,15 +3,11 @@ import Cookies from 'universal-cookie';
 
 import * as ZeusAuthTypes from "../types";
 
-const handleAPIResponseObject = async (result: any, resolve: any) => {
-    const obj = CamelCase(result) as ZeusAuthTypes.IAPIResponse;
-    if (obj.success) {
-        resolve([obj.object, null]);
-    } else {
-        resolve([null, obj.errors]);
-    }
+const handleAPIResponseObject = (result: any, resolve: any): Promise<ZeusAuthTypes.IAPIResponse> => {
+    return resolve(CamelCase(result) as ZeusAuthTypes.IAPIResponse);
 }
 
+const ZEUS_AUTH_TOKEN_KEY = "zeus.auth.token";
 
 const decamelize = (params: any, separator?: string | undefined) => {
     separator = typeof separator === 'undefined' ? '_' : separator;
@@ -32,7 +28,7 @@ const decamelize = (params: any, separator?: string | undefined) => {
     }, {});
 }
 
-const SIGNUP_URL = `/api/v1/users`;
+const SIGNUP_URL = `/api/v1/registrations`;
 const LOGIN_EMAIL_PASSWORD_URL = `/api/v1/sessions`;
 const ME_URL = `/api/v1/users/me`;
 
@@ -48,10 +44,22 @@ class ZeusAuthService {
         this.baseUrl = local ? "http://localhost:3003" : "https://auth.zeusdev.io";
         this.onTokenExpired = onTokenExpired;
 
+
+    }
+
+    static logout() {
+        this.clearToken();
+        return ZeusAuthService.instance.onTokenExpired();
+    }
+
+    static clearToken() {
+        const cookies = new Cookies();
+        cookies.remove(ZEUS_AUTH_TOKEN_KEY);
     }
 
     static init(publicKey: string, onTokenExpired: any, local = false): ZeusAuthService {
         console.log("[ZeusAuthService] init");
+        console.log('new key')
 
         if (!ZeusAuthService.instance) {
             ZeusAuthService.instance = new ZeusAuthService(publicKey, onTokenExpired, local);
@@ -61,7 +69,7 @@ class ZeusAuthService {
         return ZeusAuthService.instance;
     }
 
-    static signup(user: ZeusAuthTypes.ISignupEmailPassword): Promise<ZeusAuthTypes.IAPIResponse> {
+    static signupWithEmailPassword(user: ZeusAuthTypes.ISignupEmailPassword): Promise<ZeusAuthTypes.IAPIResponse> {
         return new Promise((resolve, reject) => {
             ZeusAuthService.instance.fetchUnauthed(
                 ZeusAuthService.instance.publicKey,
@@ -105,7 +113,7 @@ class ZeusAuthService {
 
     public saveToken(token: string) {
         const cookies = new Cookies();
-        cookies.set('token', token, { path: '/', secure: true, domain: 'auth.zeusdev.io' });
+        cookies.set(ZEUS_AUTH_TOKEN_KEY, token, { path: '/', secure: true, domain: 'auth.zeusdev.io' });
         return Promise.resolve();
     }
 
@@ -115,13 +123,13 @@ class ZeusAuthService {
 
     public async authenticateTokenSsr(publicKey: string, req: any) {
         const cookies = new Cookies(req ? req.headers.cookie : null);
-        const token = cookies.get('token');
+        const token = cookies.get(ZEUS_AUTH_TOKEN_KEY);
 
         if (token) {
             const response = await this.checkAuthToken(publicKey, token);
 
             if (!response.id) {
-                cookies.remove('token');
+                cookies.remove(ZEUS_AUTH_TOKEN_KEY);
                 // const navService = new NavService();
                 // navService.redirectUser('/login', ctx);
             }
@@ -159,7 +167,7 @@ class ZeusAuthService {
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
-                'X-ZEUS-KEY': publicKey,
+                'X-ZEUS-SERVICE-PUBLIC-KEY': publicKey,
             },
             method: type
         } as any;
@@ -190,13 +198,13 @@ class ZeusAuthService {
     public fetchAuthed(publicKey: string, url: string, data: object, type: string, tokenOverride?: string): Promise<any> {
 
         const cookies = new Cookies();
-        const token = cookies.get('token');
+        const token = cookies.get(ZEUS_AUTH_TOKEN_KEY);
 
         const actualToken = tokenOverride ? tokenOverride : token;
 
         if (!actualToken) {
             const cookies = new Cookies();
-            cookies.remove('token');
+            cookies.remove(ZEUS_AUTH_TOKEN_KEY);
             return this.onTokenExpired();
         }
 
@@ -204,7 +212,7 @@ class ZeusAuthService {
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
-                'X-ZEUS-KEY': publicKey,
+                'X-ZEUS-SERVICE-PUBLIC-KEY': publicKey,
                 Authorization: 'Bearer ' + actualToken
             },
             method: type
@@ -220,7 +228,7 @@ class ZeusAuthService {
             .then((response: Response) => {
                 if (response.status === 401) {
                     const cookies = new Cookies();
-                    cookies.remove('token');
+                    cookies.remove(ZEUS_AUTH_TOKEN_KEY);
                     return this.onTokenExpired();
                 } else {
                     return response.json();

@@ -1,5 +1,5 @@
 {
-  "name": "zeus-auth-sk",
+  "name": "zeus-auth",
   "version": "0.1.0",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
