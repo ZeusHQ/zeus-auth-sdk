@@ -1,5 +1,4 @@
 import CamelCase from 'camelcase-keys';
-import Cookies from 'universal-cookie';
 
 import * as ZeusAuthTypes from "../types";
 
@@ -47,24 +46,19 @@ class ZeusAuthService {
 
     }
 
+    static getAccessToken() {
+        return ZeusAuthService.instance.getAccessToken();
+    }
+
     static logout() {
-        this.clearToken();
+        ZeusAuthService.instance.clearToken();
         return ZeusAuthService.instance.onTokenExpired();
     }
 
-    static clearToken() {
-        const cookies = new Cookies();
-        cookies.remove(ZEUS_AUTH_TOKEN_KEY);
-    }
-
     static init(publicKey: string, onTokenExpired: any, local = false): ZeusAuthService {
-        console.log("[ZeusAuthService] init");
-        console.log('new key')
-
         if (!ZeusAuthService.instance) {
             ZeusAuthService.instance = new ZeusAuthService(publicKey, onTokenExpired, local);
         }
-
 
         return ZeusAuthService.instance;
     }
@@ -111,9 +105,19 @@ class ZeusAuthService {
         })
     }
 
+
+
+    public clearToken() {
+        localStorage.removeItem(ZEUS_AUTH_TOKEN_KEY);
+    }
+
+    public getAccessToken() {
+        const token = localStorage.getItem(ZEUS_AUTH_TOKEN_KEY);
+        return token;
+    }
+
     public saveToken(token: string) {
-        const cookies = new Cookies();
-        cookies.set(ZEUS_AUTH_TOKEN_KEY, token, { path: '/', secure: true, domain: 'auth.zeusdev.io' });
+        localStorage.setItem(ZEUS_AUTH_TOKEN_KEY, token);
         return Promise.resolve();
     }
 
@@ -121,24 +125,24 @@ class ZeusAuthService {
         return this.fetchAuthed(publicKey, ME_URL, {}, 'GET', token);
     }
 
-    public async authenticateTokenSsr(publicKey: string, req: any) {
-        const cookies = new Cookies(req ? req.headers.cookie : null);
-        const token = cookies.get(ZEUS_AUTH_TOKEN_KEY);
+    // public async authenticateTokenSsr(publicKey: string, req: any) {
+    //     // const cookies = new Cookies(req ? req.headers.cookie : null);
+    //     // const token = cookies.get(ZEUS_AUTH_TOKEN_KEY);
 
-        if (token) {
-            const response = await this.checkAuthToken(publicKey, token);
+    //     if (token) {
+    //         const response = await this.checkAuthToken(publicKey, token);
 
-            if (!response.id) {
-                cookies.remove(ZEUS_AUTH_TOKEN_KEY);
-                // const navService = new NavService();
-                // navService.redirectUser('/login', ctx);
-            }
+    //         if (!response.id) {
+    //             cookies.remove(ZEUS_AUTH_TOKEN_KEY);
+    //             // const navService = new NavService();
+    //             // navService.redirectUser('/login', ctx);
+    //         }
 
-            return { user: response, token };
-        } else {
-            return {};
-        }
-    }
+    //         return { user: response, token };
+    //     } else {
+    //         return {};
+    //     }
+    // }
 
     public fetch(url: string, data: object, type: string): Promise<any> {
         return fetch(`${url}`, {
@@ -196,15 +200,12 @@ class ZeusAuthService {
     }
 
     public fetchAuthed(publicKey: string, url: string, data: object, type: string, tokenOverride?: string): Promise<any> {
-
-        const cookies = new Cookies();
-        const token = cookies.get(ZEUS_AUTH_TOKEN_KEY);
+        const token = ZeusAuthService.instance.getAccessToken();
 
         const actualToken = tokenOverride ? tokenOverride : token;
 
         if (!actualToken) {
-            const cookies = new Cookies();
-            cookies.remove(ZEUS_AUTH_TOKEN_KEY);
+            ZeusAuthService.instance.clearToken();
             return this.onTokenExpired();
         }
 
@@ -227,8 +228,7 @@ class ZeusAuthService {
         return fetch(`${url}?${queryParams}`, fetchOpts)
             .then((response: Response) => {
                 if (response.status === 401) {
-                    const cookies = new Cookies();
-                    cookies.remove(ZEUS_AUTH_TOKEN_KEY);
+                    ZeusAuthService.instance.clearToken();
                     return this.onTokenExpired();
                 } else {
                     return response.json();

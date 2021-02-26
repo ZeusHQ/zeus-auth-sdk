@@ -1,14 +1,13 @@
 {
   "name": "zeus-auth",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "private": true,
   "dependencies": {
     "camelcase-keys": "^6.2.2",
-    "isomorphic-unfetch": "^3.1.0",
-    "universal-cookie": "^4.0.4"
+    "isomorphic-unfetch": "^3.1.0"
   },
   "peerDependencies": {
     "react": ">=17.0.1",

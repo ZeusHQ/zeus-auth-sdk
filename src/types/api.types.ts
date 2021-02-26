@@ -1,6 +1,6 @@
 export interface IAPIResponse {
     success: boolean;
-    errors: string[];
+    error: string[];
     object?: any;
     objects?: any;
     type: string;
