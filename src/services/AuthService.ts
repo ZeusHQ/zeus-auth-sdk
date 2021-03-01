@@ -3,7 +3,7 @@ import CamelCase from 'camelcase-keys';
 import * as ZeusAuthTypes from "../types";
 
 const handleAPIResponseObject = (result: any, resolve: any): Promise<ZeusAuthTypes.IAPIResponse> => {
-    return resolve(CamelCase(result) as ZeusAuthTypes.IAPIResponse);
+    return resolve(CamelCase(result, { deep: true }) as ZeusAuthTypes.IAPIResponse);
 }
 
 const ZEUS_AUTH_TOKEN_KEY = "zeus.auth.token";
@@ -46,11 +46,12 @@ class ZeusAuthService {
 
     }
 
-    static getAccessToken() {
-        return ZeusAuthService.instance.getAccessToken();
+    public static getAccessToken() {
+        return (typeof localStorage !== 'undefined') ? localStorage.getItem(ZEUS_AUTH_TOKEN_KEY) : null;
     }
 
     static logout() {
+        if (!ZeusAuthService.instance) return null;
         ZeusAuthService.instance.clearToken();
         return ZeusAuthService.instance.onTokenExpired();
     }
@@ -105,19 +106,13 @@ class ZeusAuthService {
         })
     }
 
-
-
     public clearToken() {
-        localStorage.removeItem(ZEUS_AUTH_TOKEN_KEY);
-    }
-
-    public getAccessToken() {
-        const token = localStorage.getItem(ZEUS_AUTH_TOKEN_KEY);
-        return token;
+        if (typeof localStorage !== 'undefined')
+            localStorage.removeItem(ZEUS_AUTH_TOKEN_KEY);
     }
 
     public saveToken(token: string) {
-        localStorage.setItem(ZEUS_AUTH_TOKEN_KEY, token);
+        if (typeof localStorage !== 'undefined') localStorage.setItem(ZEUS_AUTH_TOKEN_KEY, token);
         return Promise.resolve();
     }
 
@@ -200,7 +195,7 @@ class ZeusAuthService {
     }
 
     public fetchAuthed(publicKey: string, url: string, data: object, type: string, tokenOverride?: string): Promise<any> {
-        const token = ZeusAuthService.instance.getAccessToken();
+        const token = ZeusAuthService.getAccessToken();
 
         const actualToken = tokenOverride ? tokenOverride : token;
 
