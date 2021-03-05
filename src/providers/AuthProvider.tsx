@@ -1,11 +1,13 @@
 import React, { useContext, useEffect, useReducer } from 'react';
 import { IUser } from '../types';
-export const AuthStateContext = React.createContext({});
 
 const initialState = {
     me: (null as unknown) as IUser,
     loggedIn: false,
 };
+export type IAuthState = typeof initialState;
+
+export const AuthStateContext = React.createContext({} as any);
 
 enum ActionType {
     SetMe = 'setMe',
@@ -39,12 +41,37 @@ const reducer: React.Reducer<{}, Actions> = (state, action) => {
 
 export const ZEUS_AUTH_LOCAL_STORAGE_KEY = 'zeus.auth.storage';
 
-export const AuthProvider = ({ children }: any) => {
-    let localState = null;
-    if (typeof localStorage !== 'undefined' && localStorage.getItem(ZEUS_AUTH_LOCAL_STORAGE_KEY)) {
-        localState = JSON.parse(localStorage.getItem(ZEUS_AUTH_LOCAL_STORAGE_KEY) || '');
+export class ZeusAuth {
+    private static instance: ZeusAuth;
+
+    state: typeof initialState;
+    dispatch: any;
+
+    constructor(state: any, dispatch: any) {
+        this.state = state;
+        this.dispatch = dispatch;
     }
-    const [state, dispatch] = useReducer(reducer, localState || initialState);
+
+    static isLoggedIn = () => ZeusAuth.instance.state.loggedIn;
+    static me = () => ZeusAuth.instance.state.me;
+
+    static init(state: any, dispatch: any): ZeusAuth {
+        if (!ZeusAuth.instance) {
+            ZeusAuth.instance = new ZeusAuth(state, dispatch);
+        }
+
+        return ZeusAuth.instance;
+    }
+}
+
+export const AuthProvider = ({ children }: any) => {
+    let localState = { ...initialState };
+    if (typeof localStorage !== 'undefined' && localStorage.getItem(ZEUS_AUTH_LOCAL_STORAGE_KEY)) {
+        localState = JSON.parse(localStorage.getItem(ZEUS_AUTH_LOCAL_STORAGE_KEY) || '') || { ...initialState };
+    }
+    const [state, dispatch] = useReducer(reducer, (localState || initialState) as IAuthState);
+
+    ZeusAuth.init(state, dispatch);
 
     if (typeof localStorage !== 'undefined') {
         useEffect(() => {
@@ -52,7 +79,7 @@ export const AuthProvider = ({ children }: any) => {
         }, [state]);
     }
     return (
-        <AuthStateContext.Provider value={[state, dispatch]}>
+        <AuthStateContext.Provider value={{ state, dispatch }}>
             {children}
         </AuthStateContext.Provider>
     );
@@ -61,4 +88,9 @@ export const AuthProvider = ({ children }: any) => {
 // useContext hook - export here to keep code for global auth state
 // together in this file, allowing user info to be accessed and updated
 // in any functional component using the hook
-export const useAuth: any = () => useContext(AuthStateContext);
+export const useAuth = (onLoggedOut?: any) => {
+    if (!ZeusAuth.isLoggedIn()) {
+        if (onLoggedOut) onLoggedOut();
+    }
+    return useContext(AuthStateContext);
+}
