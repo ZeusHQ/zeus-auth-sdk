@@ -29,6 +29,8 @@ const decamelize = (params: any, separator?: string | undefined) => {
 
 const SIGNUP_URL = `/api/v1/registrations`;
 const LOGIN_EMAIL_PASSWORD_URL = `/api/v1/sessions`;
+const INITIATE_EMAIL_PASSWORD_RESET_URL = `/api/v1/users/initiate-password-reset`;
+const RESET_EMAIL_PASSWORD_URL = `/api/v1/users/reset-password`;
 const ME_URL = `/api/v1/users/me`;
 
 class ZeusAuthService {
@@ -42,8 +44,6 @@ class ZeusAuthService {
         this.publicKey = publicKey;
         this.baseUrl = local ? "http://localhost:3003" : "https://auth.zeusdev.io";
         this.onTokenExpired = onTokenExpired;
-
-
     }
 
     public static getAccessToken() {
@@ -85,6 +85,36 @@ class ZeusAuthService {
                 ZeusAuthService.instance.publicKey,
                 ZeusAuthService.instance.baseUrl + LOGIN_EMAIL_PASSWORD_URL,
                 { session },
+                'POST'
+            )
+                .then((result) => handleAPIResponseObject(result, resolve))
+                .catch((err) => reject(err));
+        })
+
+    }
+
+    static initiateResetEmailPassword(user: ZeusAuthTypes.IInitiateResetEmailPassword): Promise<ZeusAuthTypes.IAPIResponse> {
+
+        return new Promise((resolve, reject) => {
+            ZeusAuthService.instance.fetchUnauthed(
+                ZeusAuthService.instance.publicKey,
+                ZeusAuthService.instance.baseUrl + INITIATE_EMAIL_PASSWORD_RESET_URL,
+                { user },
+                'POST'
+            )
+                .then((result) => handleAPIResponseObject(result, resolve))
+                .catch((err) => reject(err));
+        })
+
+    }
+
+    static resetEmailPassword(user: ZeusAuthTypes.IResetEmailPassword): Promise<ZeusAuthTypes.IAPIResponse> {
+
+        return new Promise((resolve, reject) => {
+            ZeusAuthService.instance.fetchUnauthed(
+                ZeusAuthService.instance.publicKey,
+                ZeusAuthService.instance.baseUrl + RESET_EMAIL_PASSWORD_URL,
+                { user },
                 'POST'
             )
                 .then((result) => handleAPIResponseObject(result, resolve))
