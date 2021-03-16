@@ -214,6 +214,9 @@ class ZeusAuthService {
                 if (authHeader) {
                     const token = authHeader.split("Bearer ")[1];
                     this.saveToken(token);
+                } else {
+                    console.log("authHeader", authHeader)
+                    console.log(response.headers);
                 }
 
                 return response.json()
