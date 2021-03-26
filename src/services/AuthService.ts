@@ -32,6 +32,7 @@ const LOGIN_EMAIL_PASSWORD_URL = `/api/v1/sessions`;
 const INITIATE_EMAIL_PASSWORD_RESET_URL = `/api/v1/users/initiate-password-reset`;
 const RESET_EMAIL_PASSWORD_URL = `/api/v1/users/reset-password`;
 const ME_URL = `/api/v1/users/me`;
+const WAITING_LIST_EMAILS_URL = `/api/v1/waiting_list_emails`;
 
 class ZeusAuthService {
     private static instance: ZeusAuthService;
@@ -134,6 +135,20 @@ class ZeusAuthService {
                 .then((result) => handleAPIResponseObject(result, resolve))
                 .catch((err) => reject(err));
         })
+    }
+
+    static createWaitingListEmail(waitingListEmail: ZeusAuthTypes.IWaitingListEmail): Promise<ZeusAuthTypes.IAPIResponse> {
+        return new Promise((resolve, reject) => {
+            ZeusAuthService.instance.fetchUnauthed(
+                ZeusAuthService.instance.publicKey,
+                ZeusAuthService.instance.baseUrl + WAITING_LIST_EMAILS_URL,
+                { waitingListEmail },
+                'POST'
+            )
+                .then((result) => handleAPIResponseObject(result, resolve))
+                .catch((err) => reject(err));
+        })
+
     }
 
     public clearToken() {
