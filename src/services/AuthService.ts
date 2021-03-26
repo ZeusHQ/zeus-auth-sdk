@@ -137,7 +137,7 @@ class ZeusAuthService {
         })
     }
 
-    static createWaitingListEmail(waitingListEmail: ZeusAuthTypes.IWaitingListEmail): Promise<ZeusAuthTypes.IAPIResponse> {
+    static createWaitingListEmail(waitingListEmail: ZeusAuthTypes.IWaitingListEmailCreate): Promise<ZeusAuthTypes.IAPIResponse> {
         return new Promise((resolve, reject) => {
             ZeusAuthService.instance.fetchUnauthed(
                 ZeusAuthService.instance.publicKey,
