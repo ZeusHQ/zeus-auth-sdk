@@ -42,6 +42,41 @@ function Dashboard() {
 }
 ```
 
+
+## Service Use
+### Init
+
+AuthService.init([public key], [403 callback])
+```
+AuthService.init(process.env.NEXT_PUBLIC_ZEUS_AUTH_PUBLIC_KEY, () => { Router.push("/auth/login") });
+```
+
+### Email Signup
+```
+const response = await AuthService.signupWithEmailPassword({firstName: "John", lastName: "Doe", email: "john.doe@gmail.com", password: "Sekret1!"});
+```
+
+### Email Login
+```
+const response = await AuthService.loginWithEmailPassword({email: "john.doe@gmail.com", password: "Sekret1!"});
+```
+
+### Retrieving the access token
+```
+const accessToken = AuthService.getAccessToken();
+```
+
+### Initiate Reset Password
+```
+const response = await AuthService.initiateResetEmailPassword({email: "john.doe@gmail.com"})
+```
+
+### Complete Reset Password
+```
+const response = await AuthService.resetEmailPassword({password: "MoreSekret1!", passwordConfirmation: "MoreSekret1!", token: [retrieve from reset email link]})
+```
+
+
 authState will have the following data structure.
 ```
 type IPresentations = {[key: string] IPresentation};
