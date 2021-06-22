@@ -52,6 +52,7 @@ export class ZeusAuth {
         this.dispatch = dispatch;
     }
 
+    static dispatchAction = (action: Actions) => ZeusAuth.instance.dispatch(action);
     static isLoggedIn = () => ZeusAuth.instance.state.loggedIn;
     static me = () => ZeusAuth.instance.state.me;
 
@@ -78,6 +79,7 @@ export const AuthProvider = ({ children }: any) => {
             localStorage.setItem(ZEUS_AUTH_LOCAL_STORAGE_KEY, JSON.stringify(state));
         }, [state]);
     }
+
     return (
         <AuthStateContext.Provider value={{ state, dispatch }}>
             {children}
@@ -92,5 +94,14 @@ export const useAuth = (onLoggedOut?: any) => {
     if (!ZeusAuth.isLoggedIn()) {
         if (onLoggedOut) onLoggedOut();
     }
-    return useContext(AuthStateContext);
+
+    const logoutAction = () => ZeusAuth.dispatchAction({
+        type: ActionType.Logout
+    } as ILogoutAction);
+
+    const actions = {
+        logout: logoutAction,
+    }
+
+    return { actions, ctx: useContext(AuthStateContext) };
 }
