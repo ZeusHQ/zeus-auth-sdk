@@ -99,8 +99,14 @@ export const useAuth = (onLoggedOut?: any) => {
         type: ActionType.Logout
     } as ILogoutAction);
 
+    const mutateUserAction = (user: IUser) => ZeusAuth.dispatchAction({
+        type: ActionType.SetMe,
+        payload: user,
+    });
+
     const actions = {
         logout: logoutAction,
+        mutateUser: mutateUserAction,
     }
 
     const { state, dispatch } = useContext(AuthStateContext);
