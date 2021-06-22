@@ -103,5 +103,7 @@ export const useAuth = (onLoggedOut?: any) => {
         logout: logoutAction,
     }
 
-    return { actions, ctx: useContext(AuthStateContext) };
+    const { state, dispatch } = useContext(AuthStateContext);
+
+    return { actions, state, dispatch };
 }
